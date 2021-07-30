@@ -15,14 +15,25 @@ fn get_config_file_path() -> Result<PathBuf> {
     let mut config_file_path = config_dir().unwrap();
     config_file_path.push("tad");
     if !config_file_path.exists() {
-        fs::create_dir_all(&config_file_path).wrap_err_with(|| eyre!("Could not create directory"))?;
+        fs::create_dir_all(&config_file_path)
+            .wrap_err_with(|| eyre!("Could not create directory"))?;
     }
     config_file_path.push("tad.json");
     if config_file_path.exists() && config_file_path.is_file() {
         Ok(config_file_path)
     } else {
-        File::create(&config_file_path)?;
-        Err(eyre!("No config file found, a blank one was created at {:#?}", config_file_path))
+        if config_file_path.is_dir() {
+            Err(eyre!(
+                "{:#?} found, but it is a directory",
+                config_file_path
+            ))
+        } else {
+            File::create(&config_file_path)?;
+            Err(eyre!(
+                "No config file found, a blank one was created at {:#?}",
+                config_file_path
+            ))
+        }
     }
 }
 
@@ -35,19 +46,22 @@ fn load_config_file(path: PathBuf) -> Result<HashMap<String, String>> {
     Ok(map)
 }
 
-pub fn print_result(person: &String, timezone: &String) -> Result<()> {
+pub fn print_result(person: &str, timezone: &str) -> Result<()> {
     let tz: Tz = match timezone.parse() {
         Ok(v) => v,
-        Err(..) => bail!("Could not parse timezone string {}.\n", timezone)
+        Err(..) => bail!("Could not parse timezone string {}.\n", timezone),
     };
     let utc = Utc::now().with_timezone(&tz);
     let date_string = utc.format("%A %d %B %Y");
     let time_string = utc.format("%H:%M");
-    println!("The current date and time for {} is {} {}.", person, date_string, time_string);
+    println!(
+        "The current date and time for {} is {} {}.",
+        person, date_string, time_string
+    );
     Ok(())
 }
 
-pub fn run(person_to_find: &String) -> Result<()> {
+pub fn run(person_to_find: &str) -> Result<()> {
     let person_to_find = &person_to_find.to_lowercase();
     let config_file_path = get_config_file_path()?;
     let config: HashMap<String, String> = load_config_file(config_file_path)?;

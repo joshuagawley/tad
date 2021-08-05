@@ -15,9 +15,9 @@ fn print_result(person: &str, timezone: &str) -> Result<()> {
         Ok(v) => v,
         Err(..) => bail!("Could not parse timezone string {}.\n", timezone),
     };
-    let utc = Utc::now().with_timezone(&tz);
-    let date_string = utc.format("%A %d %B %Y");
-    let time_string = utc.format("%H:%M");
+    let current_time = Utc::now().with_timezone(&tz);
+    let date_string = current_time.format("%A %d %B %Y");
+    let time_string = current_time.format("%H:%M");
     println!(
         "The current date and time for {} is {} {}.",
         person, date_string, time_string
@@ -28,12 +28,11 @@ fn print_result(person: &str, timezone: &str) -> Result<()> {
 pub fn run(person_to_find: &str) -> Result<()> {
     let person_to_find = &person_to_find.to_lowercase();
     let config_file_path = get_config_file_path()?;
-    let config: HashMap<String, String> = load_config_file(config_file_path)?;
-    for (person, timezone) in config {
-        if *person_to_find == *person {
-            print_result(&person, &timezone)?;
-            return Ok(());
-        }
+    let config: HashMap<String, String> = load_config_file(&config_file_path)?;
+    if config.contains_key(person_to_find) {
+        print_result(person_to_find, &*config[person_to_find])?;
+        Ok(())
+    } else {
+        Err(eyre!("Could not find {} in config file", &person_to_find))
     }
-    Err(eyre!("Could not find {} in config file", &person_to_find))
 }

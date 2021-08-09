@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
+#![warn(clippy::all, clippy::pedantic)]
+
 use std::collections::HashMap;
 
 use chrono::Utc;
@@ -25,6 +27,8 @@ fn print_result(person: &str, timezone: &str) -> Result<()> {
     Ok(())
 }
 
+/// The main run function
+/// # Errors
 pub fn run(person_to_find: &str) -> Result<()> {
     let person_to_find = &person_to_find.to_lowercase();
     let config_file_path = get_config_file_path()?;
